@@ -1,43 +1,43 @@
 <template>
-    <template v-if="contador == 0">
-        <div class="row">
-            <div class="col-lg-3 col-md-4 col-sm-6"  v-for="(proceso, index) in procesos" :key="proceso.id">
-                <div class="card p-3">
-                    <div class="row">
-                        <div class="col-12">
-                            <label>Nombre del Proceso</label>
-                            <input placeholder="Nombre" class="form-control mb-2" type="text" v-model="proceso.nombre">
-                        </div>
-                        <div class="col-4">
-                            <label>Rafagas</label>
-                            <input placeholder="0" class="form-control mb-2" type="number" v-model="proceso.rafagas">
-                        </div>
-                        <div class="col-4">
-                            <label>T. llegada</label>
-                            <input placeholder="0" class="form-control mb-2" type="number" v-model="proceso.llegada">
-                        </div>
-                        <div class="col-4">
-                            <label>Color</label>
-                            <input type="color" class="form-control mb-2 form-control-color w-100" v-model="proceso.color">
-                        </div>
-                        <div class="col-12">
-                            <button @click="eliminarProceso(index)" class="mt-2 btn btn-danger w-100">Eliminar</button>
-                        </div>
+
+    <div class="row">
+        <h4>Procesos</h4>
+        <div class="col-lg-3 col-md-4 col-sm-6"  v-for="(proceso, index) in procesos" :key="proceso.id">
+            <div class="card p-3">
+                <div class="row">
+                    <div class="col-12">
+                        <label>Nombre del Proceso</label>
+                        <input :disabled="contador > 0" placeholder="Nombre" class="form-control mb-2" type="text" v-model="proceso.nombre">
+                    </div>
+                    <div class="col-4">
+                        <label>Rafagas</label>
+                        <input :disabled="contador > 0" placeholder="0" class="form-control mb-2" type="number" v-model="proceso.rafagas">
+                    </div>
+                    <div class="col-4">
+                        <label>T. llegada</label>
+                        <input :disabled="contador > 0" placeholder="0" class="form-control mb-2" type="number" v-model="proceso.llegada">
+                    </div>
+                    <div class="col-4">
+                        <label>Color</label>
+                        <input :disabled="contador > 0" type="color" class="form-control mb-2 form-control-color w-100" v-model="proceso.color">
+                    </div>
+                    <div class="col-12" v-if="contador == 0">
+                        <button @click="eliminarProceso(index)" class="mt-2 btn btn-danger w-100">Eliminar</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-6">
-                <button @click="agregarProceso()" class="btn btn-success mb-5 w-100">Agregar proceso +</button>
-            </div>
-            <div class="col-6">
-                <button @click="iniciarAlgoritmo()" class="btn btn-primary mb-5 w-100">Iniciar Algoritmo</button>
-            </div>
+    </div>
+    <div class="row" v-if="contador == 0">
+        <div class="col-6">
+            <button @click="agregarProceso()" class="btn btn-success mb-5 w-100">Agregar proceso +</button>
         </div>
-    </template>
+        <div class="col-6">
+            <button @click="iniciarAlgoritmo()" class="btn btn-primary mb-5 w-100">Iniciar Algoritmo</button>
+        </div>
+    </div>
     <template v-if="contador > 0">
-        <div class="card p-3">
+        <div class="card p-3" v-if="!finalizado">
             <div class="card-title p-2">
                 <h1 class="card-title">Cola de listos</h1>
             </div>
@@ -49,9 +49,9 @@
                 </div>
             </div>
         </div>
-        <div class="card p-3">
+        <div class="card p-3 d-flex">
             <div class="card-title p-2">
-                <h1 class="card-title">Diagrama de procesos</h1>
+                <h1 class="card-title">Diagrama FCFS</h1>
             </div>
             <div id="chart">
                 <apexchart id="apexChart" type="rangeBar" height="350" :options="chartOptions" :series="computedValues"></apexchart>
@@ -102,7 +102,7 @@
                 <a :href="route('fcfs')" class="btn btn-warning mb-5 w-100">Reiniciar datos</a>
             </div>
             <div class="col-6">
-                <button @click="iniciarAlgoritmo()" class="btn btn-info mb-5 w-100">Generar PDF</button>
+                <button @click="imprimir()" class="btn btn-info mb-5 w-100">Generar PDF</button>
             </div>
         </div>
     </template>
@@ -115,7 +115,6 @@ export default {
     components: {
     },
     props: {
-        
     },
     setup(props){
 
@@ -132,6 +131,7 @@ export default {
         const copia = ref([])
         const listos = ref([])
         const ejecucion = ref(null)
+        const rafagas_ejecucion = ref(0)
 
         const promedios = ref({
             tf: '',
@@ -193,7 +193,7 @@ export default {
 
         const correrAlgoritmo = () =>{
 
-            var copia2 = copia.value;
+            var copia2 = copia.value.map((proceso) => {return proceso});
 
             copia.value.forEach((proceso) => {
                 if(contador.value >= proceso.llegada){
@@ -203,10 +203,12 @@ export default {
                 }
             });
 
-            copia.value = copia2;
+            copia.value = copia2.map((proceso) => {return proceso});
 
             if(ejecucion.value == null && listos.value.length > 0){
                 ejecucion.value = listos.value[0];
+                rafagas_ejecucion.value = ejecucion.value.rafagas;
+
                 listos.value.splice(0,1);
             }
 
@@ -241,10 +243,10 @@ export default {
                 
                 
                 procesos.value[index].tr++;
-                ejecucion.value.rafagas--;
+                rafagas_ejecucion.value--;
 
 
-                if(ejecucion.value.rafagas < 1){
+                if(rafagas_ejecucion.value < 1){
                     procesos.value[index].tf = contador.value+1;
                     ejecucion.value = null;
                 }
@@ -254,6 +256,11 @@ export default {
                 finalizado.value = true;
             }
         }
+
+        const imprimir = () =>{
+            window.print();
+        }
+
 
         const series = ref([
             {
@@ -310,11 +317,13 @@ export default {
             copia,
             listos,
             ejecucion,
+            rafagas_ejecucion,
             agregarProceso,
             eliminarProceso,
             ejecutar,
             iniciarAlgoritmo,
             correrAlgoritmo,
+            imprimir,
             tSimulacion,
             contador,
             finalizado,
