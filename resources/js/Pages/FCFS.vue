@@ -1,12 +1,6 @@
 <template>
-    <template v-if="!finalizado">
+    <template v-if="contador == 0">
         <div class="row">
-            <div class="col-12">
-                <div class="card p-3">
-                    <label>Tiempo de simulación</label>
-                    <input min="5" max="3000" placeholder="0" class="form-control mb-2" type="number" v-model="tSimulacion">
-                </div>        
-            </div>
             <div class="col-lg-3 col-md-4 col-sm-6"  v-for="(proceso, index) in procesos" :key="proceso.id">
                 <div class="card p-3">
                     <div class="row">
@@ -42,14 +36,28 @@
             </div>
         </div>
     </template>
-    <div class="card p-3">
-        <div class="card-title p-2">
-            <h1 class="card-title">Diagrama de procesos</h1>
+    <template v-if="contador > 0">
+        <div class="card p-3">
+            <div class="card-title p-2">
+                <h1 class="card-title">Cola de listos</h1>
+            </div>
+            <div class="row">
+                <div class="col-1" v-for="proceso in listos" :key="proceso.id">
+                    <a class="btn" :style="'background-color: ' + proceso.color">
+                        {{proceso.nombre}}
+                    </a>
+                </div>
+            </div>
         </div>
-        <div id="chart">
-            <apexchart type="rangeBar" height="350" :options="chartOptions" :series="series"></apexchart>
+        <div class="card p-3">
+            <div class="card-title p-2">
+                <h1 class="card-title">Diagrama de procesos</h1>
+            </div>
+            <div id="chart">
+                <apexchart id="apexChart" type="rangeBar" height="350" :options="chartOptions" :series="computedValues"></apexchart>
+            </div>
         </div>
-    </div>
+    </template>
     <template v-if="finalizado">
         <div class="card p-3">
             <h3>Tiempos</h3>
@@ -101,7 +109,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 export default {
     components: {
@@ -112,32 +120,38 @@ export default {
     setup(props){
 
         const procesos = ref([{
+                id: 0,
                 nombre: '',
                 rafagas: '',
-                color: '#000000',
-                llegada: '',
-                tf: '',
-                tr: '',
-                te: '',
+                color: '#e33535',
+                llegada: 0,
+                tf: 0,
+                tr: 0,
+                te: 0,
             }]);
+        const copia = ref([])
+        const listos = ref([])
+        const ejecucion = ref(null)
+
         const promedios = ref({
             tf: '',
             tr: '',
             te: '',
         });
-        const tSimulacion = ref(5);
+        const tSimulacion = ref(1);
         const finalizado = ref(false);
         const contador = ref(0);
 
         const agregarProceso = () => {
             procesos.value.push({
+                id: 0,
                 nombre: '',
                 rafagas: '',
-                color: '#000000',
+                color: '#FFFFFF',
                 llegada: '',
-                tf: '',
-                tr: '',
-                te: '',
+                tf: 0,
+                tr: 0,
+                te: 0,
             })
         }
 
@@ -146,6 +160,13 @@ export default {
         }
 
         const iniciarAlgoritmo = () =>{
+
+            procesos.value.forEach((proceso, index) => {
+                proceso.id = index;
+            });
+
+            copia.value = procesos.value.map((proceso) => {return proceso});
+
             contador.value = 0;
             finalizado.value = false;
             ejecutar();
@@ -153,56 +174,103 @@ export default {
 
         const ejecutar = () => {
 
-            console.log("Hola");
+            console.log('Vuelta:' + contador.value);
+            correrAlgoritmo()
             contador.value++
-            agregarProceso()
 
-            if(contador.value < 4) {
+            if(!finalizado.value) {
                 setTimeout(() =>{ 
                     ejecutar()
                 }, tSimulacion.value);
             }
             else{
-                finalizado.value = true
-                console.log(finalizado)
+                console.log('fin')
+                promedios.value.tf = procesos.value.reduce((total, next) => total + next.tf, 0) / procesos.value.length
+                promedios.value.tr = procesos.value.reduce((total, next) => total + next.tr, 0) / procesos.value.length
+                promedios.value.te = procesos.value.reduce((total, next) => total + next.te, 0) / procesos.value.length
             }
         }
 
-        const series = [
+        const correrAlgoritmo = () =>{
+
+            var copia2 = copia.value;
+
+            copia.value.forEach((proceso) => {
+                if(contador.value >= proceso.llegada){
+                    listos.value.push(proceso);
+                    var index = copia2.findIndex((x) => x.id === proceso.id);
+                    copia2.splice(index, 1);
+                }
+            });
+
+            copia.value = copia2;
+
+            if(ejecucion.value == null && listos.value.length > 0){
+                ejecucion.value = listos.value[0];
+                listos.value.splice(0,1);
+            }
+
+            listos.value.forEach((proceso) =>{
+                var index = procesos.value.findIndex((x) => x.id === proceso.id);
+                procesos.value[index].tr++;
+                procesos.value[index].te++;
+                
+                series.value[0].data.push({
+                  x: proceso.nombre,
+                  y: [
+                    contador.value,
+                    contador.value+1
+                  ],
+                  fillColor: '#000000'
+                });
+            })
+
+            if(ejecucion.value != null){
+                console.log(ejecucion.value.nombre);
+                
+                series.value[0].data.push({
+                  x: ejecucion.value.nombre,
+                  y: [
+                    contador.value,
+                    contador.value+1
+                  ],
+                  fillColor: ejecucion.value.color
+                });
+
+                var index = procesos.value.findIndex((x) => x.id === ejecucion.value.id);
+                
+                
+                procesos.value[index].tr++;
+                ejecucion.value.rafagas--;
+
+
+                if(ejecucion.value.rafagas < 1){
+                    procesos.value[index].tf = contador.value+1;
+                    ejecucion.value = null;
+                }
+            }
+
+            if(listos.value.length < 1 && copia.value.length < 1 && ejecucion.value == null){
+                finalizado.value = true;
+            }
+        }
+
+        const series = ref([
             {
               data: [
-                {
-                  x: 'A',
-                  y: [
-                    1,
-                    2
-                  ],
-                  fillColor: '#008FFB'
-                },
-                {
-                  x: 'A',
-                  y: [
-                    2,
-                    3
-                  ],
-                  fillColor: '#008FFB'
-                },
-                {
-                  x: 'B',
-                  y: [
-                    25,
-                    26
-                  ],
-                  fillColor: '#ACDEDA'
-                },
               ]
             }
-        ]
+        ])
+
+        const computedValues = computed(() =>{return series.value})
         
         const chartOptions = {
             chart: {
               height: 350,
-              type: 'rangeBar'
+              type: 'rangeBar',
+              animations: {
+                enabled: false,
+              }
             },
             plotOptions: {
               bar: {
@@ -212,6 +280,9 @@ export default {
                   hideOverflowingLabels: false
                 }
               }
+            },
+            xaxis: {
+              type: 'numeric'
             },
             dataLabels: {
               enabled: true,
@@ -232,13 +303,18 @@ export default {
 
         return{
             series,
+            computedValues,
             chartOptions,
             procesos,
             promedios,
+            copia,
+            listos,
+            ejecucion,
             agregarProceso,
             eliminarProceso,
             ejecutar,
             iniciarAlgoritmo,
+            correrAlgoritmo,
             tSimulacion,
             contador,
             finalizado,
