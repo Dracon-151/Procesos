@@ -152,7 +152,7 @@ export default {
             tr: '',
             te: '',
         });
-        const tSimulacion = ref(5000);
+        const tSimulacion = ref(1);
         const orden = ref('asc');
         const finalizado = ref(false);
         const contador = ref(0);
@@ -221,15 +221,15 @@ export default {
 
             copia.value = copia2.map((proceso) => {return proceso});
 
+            listos.value.sort(function (ant, act) {
+                if (ant.prioridad < act.prioridad) return orden.value === 'desc' ? -1 : 1;
+                if (ant.prioridad > act.prioridad) return orden.value === 'desc' ? 1 : -1;
+                if (ant.llegada < act.llegada) return -1;
+                if (ant.llegada > act.llegada) return 1;
+            });
+
             if(ejecucion.value == null && listos.value.length > 0){
                 
-                listos.value.sort(function (ant, act) {
-                    if (ant.prioridad < act.prioridad) return orden.value === 'desc' ? -1 : 1;
-                    if (ant.prioridad > act.prioridad) return orden.value === 'desc' ? 1 : -1;
-                    if (ant.llegada < act.llegada) return -1;
-                    if (ant.llegada > act.llegada) return 1;
-                });
-
                 ejecucion.value = listos.value[0]
                 
                 rafagas_ejecucion.value = ejecucion.value.rafagas;

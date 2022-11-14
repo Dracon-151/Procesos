@@ -205,6 +205,11 @@ export default {
 
             copia.value = copia2.map((proceso) => {return proceso});
 
+            listos.value.sort(function (ant, act) {
+                if (ant.llegada < act.llegada) return -1;
+                if (ant.llegada > act.llegada) return 1;
+            })
+
             if(ejecucion.value == null && listos.value.length > 0){
                 ejecucion.value = listos.value[0];
                 rafagas_ejecucion.value = ejecucion.value.rafagas;
