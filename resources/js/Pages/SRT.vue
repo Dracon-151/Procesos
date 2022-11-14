@@ -1,26 +1,13 @@
 <template>
 
     <div class="row">
-        <div class="col-12">
-            <div class="card p-3 d-flex">
-                <label>Orden de prioridad</label>
-                <select :disabled="contador > 0" class="form-control mb-2" v-model="orden">
-                    <option value="asc">Ascendente</option>
-                    <option value="desc">Descendente</option>
-                </select>
-            </div>
-        </div>
         <h4>Procesos</h4>
         <div class="col-lg-3 col-md-4 col-sm-6"  v-for="(proceso, index) in procesos" :key="proceso.id">
             <div class="card p-3">
                 <div class="row">
-                    <div class="col-8">
+                    <div class="col-12">
                         <label>Nombre del Proceso</label>
                         <input :disabled="contador > 0" placeholder="Nombre" class="form-control mb-2" type="text" v-model="proceso.nombre">
-                    </div>
-                    <div class="col-4">
-                        <label>Prioridad</label>
-                        <input disabled placeholder="0" class="form-control mb-2" type="number" v-model="proceso.prioridad">
                     </div>
                     <div class="col-4">
                         <label>Rafagas</label>
@@ -64,7 +51,7 @@
         </div>
         <div class="card p-3 d-flex">
             <div class="card-title p-2">
-                <h1 class="card-title">Diagrama Prioridad Dinámica {{orden === 'asc' ? ' Ascendente' : ' Descendente'}}</h1>
+                <h1 class="card-title">Diagrama SRT</h1>
             </div>
             <div id="chart">
                 <apexchart id="apexChart" type="rangeBar" height="350" :options="chartOptions" :series="computedValues"></apexchart>
@@ -112,7 +99,7 @@
         </div>
         <div class="row">
             <div class="col-6">
-                <a :href="route('pd')" class="btn btn-warning mb-5 w-100">Reiniciar datos</a>
+                <a :href="route('srt')" class="btn btn-warning mb-5 w-100">Reiniciar datos</a>
             </div>
             <div class="col-6">
                 <button @click="imprimir()" class="btn btn-info mb-5 w-100">Generar PDF</button>
@@ -137,7 +124,6 @@ export default {
                 rafagas: '',
                 color: '#e33535',
                 llegada: 0,
-                prioridad: 0,
                 tf: 0,
                 tr: 0,
                 te: 0,
@@ -153,7 +139,6 @@ export default {
             te: '',
         });
         const tSimulacion = ref(1);
-        const orden = ref('asc');
         const finalizado = ref(false);
         const contador = ref(0);
 
@@ -164,7 +149,6 @@ export default {
                 rafagas: '',
                 color: '#e33535',
                 llegada: '',
-                prioridad: '',
                 tf: 0,
                 tr: 0,
                 te: 0,
@@ -219,35 +203,44 @@ export default {
                 }
             });
 
-            copia.value = copia2.map((proceso, index) => {return proceso});
+            copia.value = copia2.map((proceso) => {return proceso});
 
             listos.value.sort(function (ant, act) {
-                if (ant.prioridad < act.prioridad) return orden.value === 'desc' ? -1 : 1;
-                if (ant.prioridad > act.prioridad) return orden.value === 'desc' ? 1 : -1;
+                if (ant.rafagas < act.rafagas) return -1;
+                if (ant.rafagas > act.rafagas) return 1;
                 if (ant.llegada < act.llegada) return -1;
                 if (ant.llegada > act.llegada) return 1;
-            });
-
-            listos.value.forEach((proceso, index) =>{
-
-                if(index > 0 || ejecucion.value != null)
-                {
-                    var index2 = procesos.value.findIndex((x) => x.id === proceso.id);
-                    procesos.value[index2].tr++;
-                    procesos.value[index2].te++;
-
-                    proceso.prioridad = (proceso.te + proceso.rafagas)/proceso.rafagas;
-                }
             })
 
-            if(ejecucion.value == null && listos.value.length > 0){
-                
-                ejecucion.value = listos.value[0]
-                
-                rafagas_ejecucion.value = ejecucion.value.rafagas;
-
-                listos.value.splice(0,1);
+            if(listos.value.length > 0){
+                if(ejecucion.value == null){
+                    ejecucion.value = listos.value[0];
+                    rafagas_ejecucion.value = ejecucion.value.rafagas;
+                    listos.value.splice(0,1);
+                }else if(ejecucion.value != null && listos.value[0].rafagas < rafagas_ejecucion.value){
+                    
+                    listos.value.push(Object.create(ejecucion.value));
+                    listos.value.at(listos.value.length-1).rafagas = rafagas_ejecucion.value;
+                    ejecucion.value = listos.value[0];
+                    rafagas_ejecucion.value = ejecucion.value.rafagas;
+                    listos.value.splice(0,1);
+                }
             }
+
+            listos.value.forEach((proceso) =>{
+                var index = procesos.value.findIndex((x) => x.id === proceso.id);
+                procesos.value[index].tr++;
+                procesos.value[index].te++;
+                
+                series.value[0].data.push({
+                  x: proceso.nombre,
+                  y: [
+                    contador.value,
+                    contador.value+1
+                  ],
+                  fillColor: '#000000'
+                });
+            })
 
             if(ejecucion.value != null){
                 console.log(ejecucion.value.nombre);
@@ -274,18 +267,6 @@ export default {
                 }
             }
 
-            listos.value.forEach((proceso, index) =>{
-
-                series.value[0].data.push({
-                    x: proceso.nombre,
-                    y: [
-                        contador.value,
-                        contador.value+1
-                    ],
-                    fillColor: '#000000'
-                });
-            })
-
             if(listos.value.length < 1 && copia.value.length < 1 && ejecucion.value == null){
                 finalizado.value = true;
             }
@@ -306,7 +287,7 @@ export default {
         const computedValues = computed(() =>{return series.value})
         const reversedList = computed(() =>{return listos.value.map((proceso) => 
             {return proceso}).reverse()})
-
+        
         const chartOptions = {
             chart: {
               height: 350,
@@ -362,7 +343,6 @@ export default {
             correrAlgoritmo,
             imprimir,
             tSimulacion,
-            orden,
             contador,
             finalizado,
         }

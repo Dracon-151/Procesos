@@ -55,7 +55,7 @@
                 <h1 class="card-title">Cola de listos</h1>
             </div>
             <div class="row">
-                <div class="col-1" v-for="proceso in listos" :key="proceso.id">
+                <div class="col-1" v-for="proceso in reversedList" :key="proceso.id">
                     <a class="btn" :style="'background-color: ' + proceso.color">
                         {{proceso.nombre}}
                     </a>
@@ -162,7 +162,7 @@ export default {
                 id: 0,
                 nombre: '',
                 rafagas: '',
-                color: '#FFFFFF',
+                color: '#e33535',
                 llegada: '',
                 prioridad: '',
                 tf: 0,
@@ -295,7 +295,9 @@ export default {
         ])
 
         const computedValues = computed(() =>{return series.value})
-        
+        const reversedList = computed(() =>{return listos.value.map((proceso) => 
+            {return proceso}).reverse()})
+
         const chartOptions = {
             chart: {
               height: 350,
@@ -336,6 +338,7 @@ export default {
         return{
             series,
             computedValues,
+            reversedList,
             chartOptions,
             procesos,
             promedios,

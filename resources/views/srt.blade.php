@@ -4,6 +4,6 @@
 
 @section('contenido')
 
-    <fcfs-page></fcfs-page>
+    <srt-page></srt-page>
 
 @endsection

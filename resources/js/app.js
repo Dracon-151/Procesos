@@ -7,6 +7,7 @@ import FcfsPage from '@/Pages/FCFS.vue'
 import SjnPage from '@/Pages/SJN.vue'
 import PePage from '@/Pages/PE.vue'
 import PdPage from '@/Pages/PD.vue'
+import SrtPage from '@/Pages/SRT.vue'
 
 const app = createApp({
     components: {
@@ -15,6 +16,7 @@ const app = createApp({
         SjnPage,
         PePage,
         PdPage,
+        SrtPage,
     },
 });
 app.mixin(
