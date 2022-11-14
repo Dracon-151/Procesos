@@ -34,20 +34,6 @@
 
             <div class="d-flex align-items-center">
 
-                <div class="ms-1 header-item d-none d-sm-flex">
-                    <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle"
-                        data-toggle="fullscreen">
-                        <i class='bx bx-fullscreen fs-22'></i>
-                    </button>
-                </div>
-
-                <div class="ms-1 header-item d-none d-sm-flex">
-                    <button type="button"
-                        class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle light-dark-mode">
-                        <i class='bx bx-moon fs-22'></i>
-                    </button>
-                </div>
-
                 <h2><a class="text-light mx-2 mt-2" href="{{ route('home')}}">
                     Simulador de planificador de procesos
                 </a></h2>
@@ -84,16 +70,6 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->is('SRT') ? 'active' : '' }}" href="{{ route('srt')}}" role="button">
-                                <i class="ri-list-check-2"></i><span>SRT</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->is('RR') ? 'active' : '' }}" href="{{ route('rr')}}" role="button">
-                                <i class="ri-list-check-2"></i><span>RR</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link menu-link {{ request()->is('PE') ? 'active' : '' }}" href="{{ route('pe')}}" role="button">
                                 <i class="ri-list-check-2"></i><span>P. estática</span>
                             </a>
@@ -101,6 +77,16 @@
                         <li class="nav-item">
                             <a class="nav-link menu-link {{ request()->is('PD') ? 'active' : '' }}" href="{{ route('pd')}}" role="button">
                                 <i class="ri-list-check-2"></i><span>P. dinámica</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->is('SRT') ? 'active' : '' }}" href="{{ route('srt')}}" role="button">
+                                <i class="ri-list-check-2"></i><span>SRT</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->is('RR') ? 'active' : '' }}" href="{{ route('rr')}}" role="button">
+                                <i class="ri-list-check-2"></i><span>RR</span>
                             </a>
                         </li>
                     </ul>
