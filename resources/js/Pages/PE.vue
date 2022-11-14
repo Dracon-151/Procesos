@@ -1,13 +1,26 @@
 <template>
 
     <div class="row">
+        <div class="col-12">
+            <div class="card p-3 d-flex">
+                <label>Orden de prioridad</label>
+                <select :disabled="contador > 0" class="form-control mb-2" v-model="orden">
+                    <option value="asc">Ascendente</option>
+                    <option value="desc">Descendente</option>
+                </select>
+            </div>
+        </div>
         <h4>Procesos</h4>
         <div class="col-lg-3 col-md-4 col-sm-6"  v-for="(proceso, index) in procesos" :key="proceso.id">
             <div class="card p-3">
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-8">
                         <label>Nombre del Proceso</label>
                         <input :disabled="contador > 0" placeholder="Nombre" class="form-control mb-2" type="text" v-model="proceso.nombre">
+                    </div>
+                    <div class="col-4">
+                        <label>Prioridad</label>
+                        <input :disabled="contador > 0" placeholder="0" class="form-control mb-2" type="number" v-model="proceso.prioridad">
                     </div>
                     <div class="col-4">
                         <label>Rafagas</label>
@@ -51,7 +64,7 @@
         </div>
         <div class="card p-3 d-flex">
             <div class="card-title p-2">
-                <h1 class="card-title">Diagrama SJN</h1>
+                <h1 class="card-title">Diagrama Prioridad Estática {{orden === 'asc' ? ' Ascendente' : ' Descendente'}}</h1>
             </div>
             <div id="chart">
                 <apexchart id="apexChart" type="rangeBar" height="350" :options="chartOptions" :series="computedValues"></apexchart>
@@ -99,7 +112,7 @@
         </div>
         <div class="row">
             <div class="col-6">
-                <a :href="route('sjn')" class="btn btn-warning mb-5 w-100">Reiniciar datos</a>
+                <a :href="route('pe')" class="btn btn-warning mb-5 w-100">Reiniciar datos</a>
             </div>
             <div class="col-6">
                 <button @click="imprimir()" class="btn btn-info mb-5 w-100">Generar PDF</button>
@@ -124,6 +137,7 @@ export default {
                 rafagas: '',
                 color: '#e33535',
                 llegada: 0,
+                prioridad: 0,
                 tf: 0,
                 tr: 0,
                 te: 0,
@@ -138,7 +152,8 @@ export default {
             tr: '',
             te: '',
         });
-        const tSimulacion = ref(1);
+        const tSimulacion = ref(5000);
+        const orden = ref('asc');
         const finalizado = ref(false);
         const contador = ref(0);
 
@@ -149,6 +164,7 @@ export default {
                 rafagas: '',
                 color: '#FFFFFF',
                 llegada: '',
+                prioridad: '',
                 tf: 0,
                 tr: 0,
                 te: 0,
@@ -208,13 +224,13 @@ export default {
             if(ejecucion.value == null && listos.value.length > 0){
                 
                 listos.value.sort(function (ant, act) {
-                    if (ant.rafagas < act.rafagas) return -1;
-                    if (ant.rafagas > act.rafagas) return 1;
+                    if (ant.prioridad < act.prioridad) return orden.value === 'desc' ? -1 : 1;
+                    if (ant.prioridad > act.prioridad) return orden.value === 'desc' ? 1 : -1;
                     if (ant.llegada < act.llegada) return -1;
                     if (ant.llegada > act.llegada) return 1;
-                })
-                
-                ejecucion.value = listos.value[0];
+                });
+
+                ejecucion.value = listos.value[0]
                 
                 rafagas_ejecucion.value = ejecucion.value.rafagas;
 
@@ -334,6 +350,7 @@ export default {
             correrAlgoritmo,
             imprimir,
             tSimulacion,
+            orden,
             contador,
             finalizado,
         }
