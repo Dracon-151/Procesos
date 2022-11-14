@@ -4,6 +4,6 @@
 
 @section('contenido')
 
-    <fcfs-page></fcfs-page>
+    <sjn-page></sjn-page>
 
 @endsection
